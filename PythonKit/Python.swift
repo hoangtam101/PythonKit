@@ -283,8 +283,8 @@ public struct ThrowingPythonObject {
     @discardableResult
     public func dynamicallyCall(
         withArguments args: PythonConvertible...) throws -> PythonObject {
-        return try dynamicallyCall(withArguments: args)
-    }
+            return try dynamicallyCall(withArguments: args)
+        }
     
     /// Call `self` with the specified positional arguments.
     /// If the call fails for some reason, `PythonError.invalidCall` is thrown.
@@ -293,26 +293,26 @@ public struct ThrowingPythonObject {
     @discardableResult
     public func dynamicallyCall(
         withArguments args: [PythonConvertible] = []) throws -> PythonObject {
-        try throwPythonErrorIfPresent()
-        
-        // Positional arguments are passed as a tuple of objects.
-        let argTuple = pyTuple(args.map { $0.pythonObject })
-        defer { Py_DecRef(argTuple) }
-        
-        // Python calls always return a non-null object when successful. If the
-        // Python function produces the equivalent of C `void`, it returns the
-        // `None` object. A `null` result of `PyObjectCall` happens when there is an
-        // error, like `self` not being a Python callable.
-        let selfObject = base.ownedPyObject
-        defer { Py_DecRef(selfObject) }
-        
-        guard let result = PyObject_CallObject(selfObject, argTuple) else {
-            // If a Python exception was thrown, throw a corresponding Swift error.
             try throwPythonErrorIfPresent()
-            throw PythonError.invalidCall(base)
+            
+            // Positional arguments are passed as a tuple of objects.
+            let argTuple = pyTuple(args.map { $0.pythonObject })
+            defer { Py_DecRef(argTuple) }
+            
+            // Python calls always return a non-null object when successful. If the
+            // Python function produces the equivalent of C `void`, it returns the
+            // `None` object. A `null` result of `PyObjectCall` happens when there is an
+            // error, like `self` not being a Python callable.
+            let selfObject = base.ownedPyObject
+            defer { Py_DecRef(selfObject) }
+            
+            guard let result = PyObject_CallObject(selfObject, argTuple) else {
+                // If a Python exception was thrown, throw a corresponding Swift error.
+                try throwPythonErrorIfPresent()
+                throw PythonError.invalidCall(base)
+            }
+            return PythonObject(consuming: result)
         }
-        return PythonObject(consuming: result)
-    }
     
     /// Call `self` with the specified arguments.
     /// If the call fails for some reason, `PythonError.invalidCall` is thrown.
@@ -322,8 +322,8 @@ public struct ThrowingPythonObject {
     public func dynamicallyCall(
         withKeywordArguments args:
         KeyValuePairs<String, PythonConvertible> = [:]) throws -> PythonObject {
-        return try _dynamicallyCall(args)
-    }
+            return try _dynamicallyCall(args)
+        }
     
     /// Alias for the function above that lets the caller dynamically construct the argument list, without using a dictionary literal.
     /// This function must be called explicitly on a `PythonObject` because `@dynamicCallable` does not recognize it.
@@ -331,8 +331,8 @@ public struct ThrowingPythonObject {
     public func dynamicallyCall(
         withKeywordArguments args:
         [(key: String, value: PythonConvertible)] = []) throws -> PythonObject {
-        return try _dynamicallyCall(args)
-    }
+            return try _dynamicallyCall(args)
+        }
     
     /// Implementation of `dynamicallyCall(withKeywordArguments)`.
     private func _dynamicallyCall<T : Collection>(_ args: T) throws -> PythonObject
@@ -404,8 +404,8 @@ public struct ThrowingPythonObject {
     public var tuple4: (PythonObject, PythonObject, PythonObject, PythonObject)? {
         let ct = base.checking
         guard let elt0 = ct[0], let elt1 = ct[1],
-            let elt2 = ct[2], let elt3 = ct[3] else {
-                return nil
+              let elt2 = ct[2], let elt3 = ct[3] else {
+            return nil
         }
         return (elt0, elt1, elt2, elt3)
     }
@@ -521,8 +521,8 @@ public struct CheckingPythonObject {
     /// Converts to a 4-tuple, if possible.
     public var tuple4: (PythonObject, PythonObject, PythonObject, PythonObject)? {
         guard let elt0 = self[0], let elt1 = self[1],
-            let elt2 = self[2], let elt3 = self[3] else {
-                return nil
+              let elt2 = self[2], let elt3 = self[3] else {
+            return nil
         }
         return (elt0, elt1, elt2, elt3)
     }
@@ -540,11 +540,11 @@ public struct CheckingPythonObject {
 /// index.
 private func flattenedSubscriptIndices(
     _ indices: [PythonConvertible]) -> OwnedPyObjectPointer {
-    if indices.count == 1 {
-        return indices[0].ownedPyObject
+        if indices.count == 1 {
+            return indices[0].ownedPyObject
+        }
+        return pyTuple(indices.map { $0.pythonObject })
     }
-    return pyTuple(indices.map { $0.pythonObject })
-}
 
 public extension PythonObject {
     subscript(dynamicMember memberName: String) -> PythonObject {
@@ -618,8 +618,9 @@ public extension PythonObject {
     @discardableResult
     func dynamicallyCall(
         withArguments args: [PythonConvertible] = []) -> PythonObject {
-        return try! throwing.dynamicallyCall(withArguments: args)
-    }
+            let object = try? throwing.dynamicallyCall(withArguments: args)
+            return object ?? PythonObject(arrayLiteral: [])
+        }
     
     /// Call `self` with the specified arguments.
     /// - Precondition: `self` must be a Python callable.
@@ -628,8 +629,9 @@ public extension PythonObject {
     func dynamicallyCall(
         withKeywordArguments args:
         KeyValuePairs<String, PythonConvertible> = [:]) -> PythonObject {
-        return try! throwing.dynamicallyCall(withKeywordArguments: args)
-    }
+            let object = try? throwing.dynamicallyCall(withKeywordArguments: args)
+            return object ?? PythonObject(arrayLiteral: [])
+        }
     
     /// Alias for the function above that lets the caller dynamically construct the argument list, without using a dictionary literal.
     /// This function must be called explicitly on a `PythonObject` because `@dynamicCallable` does not recognize it.
@@ -637,8 +639,9 @@ public extension PythonObject {
     func dynamicallyCall(
         withKeywordArguments args:
         [(key: String, value: PythonConvertible)] = []) -> PythonObject {
-        return try! throwing.dynamicallyCall(withKeywordArguments: args)
-    }
+            let object = try? throwing.dynamicallyCall(withKeywordArguments: args)
+            return object ?? PythonObject(arrayLiteral: [])
+        }
 }
 
 //===----------------------------------------------------------------------===//
@@ -685,7 +688,7 @@ public struct PythonInterface {
             
             # Some Python modules expect to have at least one argument in `sys.argv`:
             sys.argv = [""]
-
+            
             # Some Python modules require `sys.executable` to return the path
             # to the Python interpreter executable. In Darwin, Python 3 returns the
             # main process executable path instead:
@@ -772,8 +775,8 @@ public extension PythonObject {
 
 /// Return true if the specified objects an instance of the low-level Python
 /// type descriptor passed in as 'type'.
-private func isType(_ object: PythonObject,
-                    type: PyObjectPointer) -> Bool {
+fileprivate func isType(_ object: PythonObject,
+                        type: PyObjectPointer) -> Bool {
     let typePyRef = PythonObject(type)
     
     let result = Python.isinstance(object, typePyRef)
@@ -854,7 +857,7 @@ extension Int : PythonConvertible, ConvertibleFromPython {
         // integer compatible.
         guard let value = pythonObject.converted(
             withError: -1, by: PyInt_AsLong) else {
-                return nil
+            return nil
         }
         self = value
     }
@@ -872,7 +875,7 @@ extension UInt : PythonConvertible, ConvertibleFromPython {
         // compatible.
         guard let value = pythonObject.converted(
             withError: ~0, by: PyInt_AsUnsignedLongMask) else {
-                return nil
+            return nil
         }
         self = value
     }
@@ -889,7 +892,7 @@ extension Double : PythonConvertible, ConvertibleFromPython {
         // not float compatible.
         guard let value = pythonObject.converted(
             withError: -1, by: PyFloat_AsDouble) else {
-                return nil
+            return nil
         }
         self = value
     }
@@ -1096,17 +1099,17 @@ where Key : ConvertibleFromPython, Value : ConvertibleFromPython {
         while PyDict_Next(
             pythonDict.borrowedPyObject,
             &position, &key, &value) != 0 {
-                // If any key or value is not convertible to the corresponding Swift
-                // type, then the entire dictionary is not convertible.
-                if let swiftKey = Key(PythonObject(key!)),
-                    let swiftValue = Value(PythonObject(value!)) {
-                    // It is possible that there are duplicate keys after conversion. We
-                    // silently allow duplicate keys and pick a nondeterministic result if
-                    // there is a collision.
-                    self[swiftKey] = swiftValue
-                } else {
-                    return nil
-                }
+            // If any key or value is not convertible to the corresponding Swift
+            // type, then the entire dictionary is not convertible.
+            if let swiftKey = Key(PythonObject(key!)),
+               let swiftValue = Value(PythonObject(value!)) {
+                // It is possible that there are duplicate keys after conversion. We
+                // silently allow duplicate keys and pick a nondeterministic result if
+                // there is a collision.
+                self[swiftKey] = swiftValue
+            } else {
+                return nil
+            }
         }
     }
 }
@@ -1127,8 +1130,8 @@ extension Range : ConvertibleFromPython where Bound : ConvertibleFromPython {
     public init?(_ pythonObject: PythonObject) {
         guard isType(pythonObject, type: PySlice_Type) else { return nil }
         guard let lowerBound = Bound(pythonObject.start),
-            let upperBound = Bound(pythonObject.stop) else {
-                return nil
+              let upperBound = Bound(pythonObject.stop) else {
+            return nil
         }
         guard pythonObject.step == Python.None else { return nil }
         self.init(uncheckedBounds: (lowerBound, upperBound))
@@ -1148,8 +1151,8 @@ where Bound : ConvertibleFromPython {
         guard isType(pythonObject, type: PySlice_Type) else { return nil }
         guard let lowerBound = Bound(pythonObject.start) else { return nil }
         guard pythonObject.stop == Python.None,
-            pythonObject.step == Python.None else {
-                return nil
+              pythonObject.step == Python.None else {
+            return nil
         }
         self.init(lowerBound)
     }
@@ -1168,8 +1171,8 @@ where Bound : ConvertibleFromPython {
         guard isType(pythonObject, type: PySlice_Type) else { return nil }
         guard let upperBound = Bound(pythonObject.stop) else { return nil }
         guard pythonObject.start == Python.None,
-            pythonObject.step == Python.None else {
-                return nil
+              pythonObject.step == Python.None else {
+            return nil
         }
         self.init(upperBound)
     }
@@ -1180,25 +1183,25 @@ where Bound : ConvertibleFromPython {
 //===----------------------------------------------------------------------===//
 
 private typealias PythonBinaryOp =
-    (OwnedPyObjectPointer?, OwnedPyObjectPointer?) -> OwnedPyObjectPointer?
+(OwnedPyObjectPointer?, OwnedPyObjectPointer?) -> OwnedPyObjectPointer?
 private typealias PythonUnaryOp =
-    (OwnedPyObjectPointer?) -> OwnedPyObjectPointer?
+(OwnedPyObjectPointer?) -> OwnedPyObjectPointer?
 
 private func performBinaryOp(
     _ op: PythonBinaryOp, lhs: PythonObject, rhs: PythonObject) -> PythonObject {
-    let result = op(lhs.borrowedPyObject, rhs.borrowedPyObject)
-    // If binary operation fails (e.g. due to `TypeError`), throw an exception.
-    try! throwPythonErrorIfPresent()
-    return PythonObject(consuming: result!)
-}
+        let result = op(lhs.borrowedPyObject, rhs.borrowedPyObject)
+        // If binary operation fails (e.g. due to `TypeError`), throw an exception.
+        try! throwPythonErrorIfPresent()
+        return PythonObject(consuming: result!)
+    }
 
 private func performUnaryOp(
     _ op: PythonUnaryOp, operand: PythonObject) -> PythonObject {
-    let result = op(operand.borrowedPyObject)
-    // If unary operation fails (e.g. due to `TypeError`), throw an exception.
-    try! throwPythonErrorIfPresent()
-    return PythonObject(consuming: result!)
-}
+        let result = op(operand.borrowedPyObject)
+        // If unary operation fails (e.g. due to `TypeError`), throw an exception.
+        try! throwPythonErrorIfPresent()
+        return PythonObject(consuming: result!)
+    }
 
 public extension PythonObject {
     static func + (lhs: PythonObject, rhs: PythonObject) -> PythonObject {
@@ -1208,7 +1211,7 @@ public extension PythonObject {
     static func - (lhs: PythonObject, rhs: PythonObject) -> PythonObject {
         return performBinaryOp(PyNumber_Subtract, lhs: lhs, rhs: rhs)
     }
-
+    
     static func * (lhs: PythonObject, rhs: PythonObject) -> PythonObject {
         return performBinaryOp(PyNumber_Multiply, lhs: lhs, rhs: rhs)
     }
@@ -1232,33 +1235,37 @@ public extension PythonObject {
     static func /= (lhs: inout PythonObject, rhs: PythonObject) {
         lhs = performBinaryOp(PyNumber_InPlaceTrueDivide, lhs: lhs, rhs: rhs)
     }
+    
+    var isArray: Bool {
+        return (checking.count ?? 0) > 0
+    }
 }
 
 public extension PythonObject {
     static func & (lhs: PythonObject, rhs: PythonObject) -> PythonObject {
         return performBinaryOp(PyNumber_And, lhs: lhs, rhs: rhs)
     }
-
+    
     static func | (lhs: PythonObject, rhs: PythonObject) -> PythonObject {
         return performBinaryOp(PyNumber_Or, lhs: lhs, rhs: rhs)
     }
-
+    
     static func ^ (lhs: PythonObject, rhs: PythonObject) -> PythonObject {
         return performBinaryOp(PyNumber_Xor, lhs: lhs, rhs: rhs)
     }
-
+    
     static func &= (lhs: inout PythonObject, rhs: PythonObject) {
         lhs = performBinaryOp(PyNumber_InPlaceAnd, lhs: lhs, rhs: rhs)
     }
-
+    
     static func |= (lhs: inout PythonObject, rhs: PythonObject) {
         lhs = performBinaryOp(PyNumber_InPlaceOr, lhs: lhs, rhs: rhs)
     }
-
+    
     static func ^= (lhs: inout PythonObject, rhs: PythonObject) {
         lhs = performBinaryOp(PyNumber_InPlaceXor, lhs: lhs, rhs: rhs)
     }
-
+    
     static prefix func ~ (_ operand: Self) -> Self {
         return performUnaryOp(PyNumber_Invert, operand: operand)
     }
@@ -1274,7 +1281,7 @@ extension PythonObject : SignedNumeric {
     public var magnitude: PythonObject {
         return self < 0 ? -self : self
     }
-
+    
     // Override the default implementation of `-` prefix function
     // from SignedNumeric (https://bugs.swift.org/browse/SR-13293).
     public static prefix func - (_ operand: Self) -> Self {
@@ -1314,23 +1321,23 @@ extension PythonObject : Equatable, Comparable {
             fatalError("No result or error returned when comparing \(self) to \(other)")
         }
     }
-
+    
     public static func == (lhs: PythonObject, rhs: PythonObject) -> Bool {
         return lhs.compared(to: rhs, byOp: Py_EQ)
     }
- 
+    
     public static func != (lhs: PythonObject, rhs: PythonObject) -> Bool {
         return lhs.compared(to: rhs, byOp: Py_NE)
     }
-
+    
     public static func < (lhs: PythonObject, rhs: PythonObject) -> Bool {
         return lhs.compared(to: rhs, byOp: Py_LT)
     }
-
+    
     public static func <= (lhs: PythonObject, rhs: PythonObject) -> Bool {
         return lhs.compared(to: rhs, byOp: Py_LE)
     }
- 
+    
     public static func > (lhs: PythonObject, rhs: PythonObject) -> Bool {
         return lhs.compared(to: rhs, byOp: Py_GT)
     }
@@ -1424,7 +1431,6 @@ extension PythonObject : Sequence {
         
         public func next() -> PythonObject? {
             guard let result = PyIter_Next(self.pythonIterator.borrowedPyObject) else {
-                try! throwPythonErrorIfPresent()
                 return nil
             }
             return PythonObject(consuming: result)
@@ -1452,7 +1458,7 @@ extension PythonObject {
 //===----------------------------------------------------------------------===//
 
 extension PythonObject : ExpressibleByBooleanLiteral, ExpressibleByIntegerLiteral,
-ExpressibleByFloatLiteral, ExpressibleByStringLiteral {
+                         ExpressibleByFloatLiteral, ExpressibleByStringLiteral {
     public init(booleanLiteral value: Bool) {
         self.init(value)
     }
@@ -1473,7 +1479,7 @@ extension PythonObject : ExpressibleByArrayLiteral, ExpressibleByDictionaryLiter
     }
     public typealias Key = PythonObject
     public typealias Value = PythonObject
-
+    
     // Preserves element order in the final Python object, unlike
     // `Dictionary.pythonObject`. When keys are duplicated, throw the same
     // runtime error as `Swift.Dictionary.init(dictionaryLiteral:)`. This
@@ -1485,7 +1491,7 @@ extension PythonObject : ExpressibleByArrayLiteral, ExpressibleByDictionaryLiter
         for (key, value) in elements {
             let k = key.ownedPyObject
             let v = value.ownedPyObject
-
+            
             // Use Python's native key checking instead of querying whether
             // `elements` contains the key. Although this could theoretically
             // produce different results, it produces the Python object we want.
@@ -1498,7 +1504,7 @@ extension PythonObject : ExpressibleByArrayLiteral, ExpressibleByDictionaryLiter
                 try! throwPythonErrorIfPresent()
                 fatalError("No result or error checking whether \(elements) contains \(key)")
             }
-
+            
             Py_DecRef(k)
             Py_DecRef(v)
         }
@@ -1508,16 +1514,16 @@ extension PythonObject : ExpressibleByArrayLiteral, ExpressibleByDictionaryLiter
 
 public struct PythonBytes : PythonConvertible, ConvertibleFromPython, Hashable {
     public private(set) var pythonObject: PythonObject
-
+    
     public init?(_ pythonObject: PythonObject) {
         // We try to get the string/size pointers out. If it works, hooray, this is a bytes
         // otherwise it isn't.
         let pyObject = pythonObject.ownedPyObject
         defer { Py_DecRef(pyObject) }
-
+        
         var length = 0
         var buffer: UnsafeMutablePointer<CChar>? = nil
-
+        
         switch PyBytes_AsStringAndSize(pyObject, &buffer, &length) {
         case 0:
             self.pythonObject = pythonObject
@@ -1525,7 +1531,7 @@ public struct PythonBytes : PythonConvertible, ConvertibleFromPython, Hashable {
             return nil
         }
     }
-
+    
     @inlinable
     public init<Bytes: Sequence>(_ bytes: Bytes) where Bytes.Element == UInt8 {
         let possibleSelf = bytes.withContiguousStorageIfAvailable { storagePtr in
@@ -1540,7 +1546,7 @@ public struct PythonBytes : PythonConvertible, ConvertibleFromPython, Hashable {
             }
         }
     }
-
+    
     @inlinable
     public init<Bytes: Sequence>(_ bytes: Bytes) where Bytes.Element == Int8 {
         let possibleSelf = bytes.withContiguousStorageIfAvailable { storagePtr in
@@ -1555,33 +1561,33 @@ public struct PythonBytes : PythonConvertible, ConvertibleFromPython, Hashable {
             }
         }
     }
-
+    
     private init(bytesObject: PythonObject) {
         self.pythonObject = bytesObject
     }
-
+    
     @usableFromInline
     static func fromBytePointer(_ bytes: UnsafeBufferPointer<UInt8>) -> PythonBytes {
         bytes.withMemoryRebound(to: Int8.self) { reboundPtr in
             PythonBytes.fromBytePointer(reboundPtr)
         }
     }
-
+    
     @usableFromInline
     static func fromBytePointer(_ bytes: UnsafeBufferPointer<Int8>) -> PythonBytes {
         let v = PyBytes_FromStringAndSize(bytes.baseAddress, bytes.count)!
         return PythonBytes(bytesObject: PythonObject(consuming: v))
     }
-
+    
     public func withUnsafeBytes<ReturnValue>(
         _ callback: (UnsafeRawBufferPointer) throws -> ReturnValue
     ) rethrows -> ReturnValue {
         let pyObject = self.pythonObject.ownedPyObject
         defer { Py_DecRef(pyObject) }
-
+        
         var length = 0
         var buffer: UnsafeMutablePointer<CChar>? = nil
-
+        
         switch PyBytes_AsStringAndSize(pyObject, &buffer, &length) {
         case 0:
             let buffer = UnsafeRawBufferPointer(start: buffer, count: length)
@@ -1629,7 +1635,7 @@ final class PyFunction {
     
     /// Stores all function pointers in the same stored property. `callAsFunction` casts this into the desired type.
     private var callSwiftFunction: Storage
-  
+    
     init(_ callSwiftFunction: @escaping VarArgsFunction) {
         self.callingConvention = .varArgs
         self.callSwiftFunction = unsafeBitCast(callSwiftFunction, to: Storage.self)
@@ -1642,7 +1648,7 @@ final class PyFunction {
     
     private func checkConvention(_ calledConvention: CallingConvention) {
         precondition(callingConvention == calledConvention,
-            "Called PyFunction with convention \(calledConvention), but expected \(callingConvention)")
+                     "Called PyFunction with convention \(calledConvention), but expected \(callingConvention)")
     }
     
     func callAsFunction(_ argumentsTuple: PythonObject) throws -> PythonConvertible {
@@ -1700,7 +1706,7 @@ extension PythonFunction : PythonConvertible {
         guard (versionMajor == 3 && versionMinor >= 1) || versionMajor > 3 else {
             fatalError("PythonFunction only supports Python 3.1 and above.")
         }
-
+        
         let destructor: @convention(c) (PyObjectPointer?) -> Void = { capsulePointer in
             let funcPointer = PyCapsule_GetPointer(capsulePointer, nil)
             Unmanaged<PyFunction>.fromOpaque(funcPointer).release()
@@ -1711,7 +1717,7 @@ extension PythonFunction : PythonConvertible {
             nil,
             unsafeBitCast(destructor, to: OpaquePointer.self)
         )
-
+        
         var methodDefinition: UnsafeMutablePointer<PyMethodDef>
         switch function.callingConvention {
         case .varArgs:
@@ -1724,7 +1730,7 @@ extension PythonFunction : PythonConvertible {
             capsulePointer,
             nil
         )
-
+        
         return PythonObject(consuming: pyFuncPointer)
     }
 }
@@ -1734,13 +1740,13 @@ fileprivate extension PythonFunction {
         let name: StaticString = "pythonkit_swift_function"
         // `utf8Start` is a property of StaticString, thus, it has a stable pointer.
         let namePointer = UnsafeRawPointer(name.utf8Start).assumingMemoryBound(to: Int8.self)
-
+        
         let methodImplementationPointer = unsafeBitCast(
             PythonFunction.sharedMethodImplementation, to: OpaquePointer.self)
-
+        
         /// The standard calling convention. See Python C API docs
         let METH_VARARGS = 0x0001 as Int32
-
+        
         let pointer = UnsafeMutablePointer<PyMethodDef>.allocate(capacity: 1)
         pointer.pointee = PyMethodDef(
             ml_name: namePointer,
@@ -1748,7 +1754,7 @@ fileprivate extension PythonFunction {
             ml_flags: METH_VARARGS,
             ml_doc: nil
         )
-
+        
         return pointer
     }()
     
@@ -1756,14 +1762,14 @@ fileprivate extension PythonFunction {
         let name: StaticString = "pythonkit_swift_function_with_keywords"
         // `utf8Start` is a property of StaticString, thus, it has a stable pointer.
         let namePointer = UnsafeRawPointer(name.utf8Start).assumingMemoryBound(to: Int8.self)
-
+        
         let methodImplementationPointer = unsafeBitCast(
             PythonFunction.sharedMethodWithKeywordsImplementation, to: OpaquePointer.self)
-
+        
         /// A combination of flags that supports `**kwargs`. See Python C API docs
         let METH_VARARGS = 0x0001 as Int32
         let METH_KEYWORDS = 0x0002 as Int32
-
+        
         let pointer = UnsafeMutablePointer<PyMethodDef>.allocate(capacity: 1)
         pointer.pointee = PyMethodDef(
             ml_name: namePointer,
@@ -1771,20 +1777,20 @@ fileprivate extension PythonFunction {
             ml_flags: METH_VARARGS | METH_KEYWORDS,
             ml_doc: nil
         )
-
+        
         return pointer
     }()
-
+    
     private static let sharedMethodImplementation: @convention(c) (
         PyObjectPointer?, PyObjectPointer?
     ) -> PyObjectPointer? = { context, argumentsPointer in
         guard let argumentsPointer = argumentsPointer, let capsulePointer = context else {
             return nil
         }
-
+        
         let funcPointer = PyCapsule_GetPointer(capsulePointer, nil)
         let function = Unmanaged<PyFunction>.fromOpaque(funcPointer).takeUnretainedValue()
-
+        
         do {
             let argumentsAsTuple = PythonObject(consuming: argumentsPointer)
             return try function(argumentsAsTuple).ownedPyObject
@@ -1800,10 +1806,10 @@ fileprivate extension PythonFunction {
         guard let argumentsPointer = argumentsPointer, let capsulePointer = context else {
             return nil
         }
-
+        
         let funcPointer = PyCapsule_GetPointer(capsulePointer, nil)
         let function = Unmanaged<PyFunction>.fromOpaque(funcPointer).takeUnretainedValue()
-
+        
         do {
             let argumentsAsTuple = PythonObject(consuming: argumentsPointer)
             var keywordArgumentsAsDictionary: PythonObject
@@ -1818,7 +1824,7 @@ fileprivate extension PythonFunction {
             return nil // This must only be `nil` if an exception has been set
         }
     }
-
+    
     private static func setPythonError(swiftError: Error) {
         if let pythonObject = swiftError as? PythonObject {
             if Bool(Python.isinstance(pythonObject, Python.BaseException))! {
@@ -1846,14 +1852,14 @@ extension PythonObject: Error {}
 struct PyMethodDef {
     /// The name of the built-in function/method
     var ml_name: UnsafePointer<Int8>
-
+    
     /// The C function that implements it.
     /// Since this accepts multiple function signatures, the Swift type must be opaque here.
     var ml_meth: OpaquePointer
-
+    
     /// Combination of METH_xxx flags, which mostly describe the args expected by the C func
     var ml_flags: Int32
-
+    
     /// The __doc__ attribute, or NULL
     var ml_doc: UnsafePointer<Int8>?
 }
@@ -1910,7 +1916,7 @@ public struct PythonClass {
             })
         }
     }
-
+    
     public init(_ name: String, superclasses: [PythonObject] = [], members: Members = [:]) {
         self.init(name, superclasses: superclasses, members: members.dictionary)
     }
